@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-abb-light text-abb-dark antialiased overflow-hidden;
+  }
+}
+
+.abb-shadow {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.markdown-body strong {
+  @apply font-black text-black;
+}
+
+.markdown-body p {
+  @apply mb-2;
+}
+
+.markdown-body ul {
+  @apply list-disc ml-5 mb-3;
+}
+
+.markdown-body code {
+  @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono;
+}

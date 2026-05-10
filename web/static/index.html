@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABB Robotics | Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --abb-red: #e30613; --abb-dark: #333333; --bg-light: #f8f9fa; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light); color: var(--abb-dark); margin: 0; height: 100vh; overflow: hidden; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .abb-shadow { box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+        .markdown-body strong { font-weight: 800; color: #000; }
+        .markdown-body p { margin-bottom: 6px; }
+        .markdown-body ul { list-style-type: disc; margin-left: 18px; margin-bottom: 8px; }
+        .sidebar-item { border-left: 3px solid #eee; transition: all 0.2s; }
+        .sidebar-item:hover { border-left-color: var(--abb-red); background-color: #fff; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <header class="h-16 bg-white border-b-4 border-[#e30613] flex items-center justify-between px-8 shadow-sm shrink-0">
+        <div class="flex items-center gap-5">
+            <img src="/static/assets/logo_abb.png" alt="ABB" class="h-6">
+            <div class="h-6 w-[1px] bg-gray-200"></div>
+            <h1 class="text-lg font-black text-gray-800 tracking-tighter uppercase italic">RobotStudio <span class="font-light text-gray-400">Command Center</span></h1>
+        </div>
+        <div class="flex flex-col items-end">
+            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">System Status</span>
+            <span class="text-[11px] font-bold text-green-600 flex items-center gap-1.5 uppercase">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Online
+            </span>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col px-6 py-4 gap-4 shrink-0">
+            <section>
+                <h2 class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-3">Telemetría</h2>
+                <div class="space-y-3">
+                    <div class="bg-white p-4 rounded-lg border border-gray-100 abb-shadow sidebar-item">
+                        <div class="text-[10px] uppercase text-gray-400 font-bold mb-1">Velocidad Nominal</div>
+                        <div class="flex items-baseline gap-2">
+                            <span id="speed-val" class="text-3xl font-black text-gray-800 mono">---</span>
+                            <span class="text-[11px] font-bold text-red-600 mono">mm/s</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-100 abb-shadow sidebar-item">
+                        <div class="text-[10px] uppercase text-gray-400 font-bold mb-1">Capacidad Max</div>
+                        <div class="flex items-baseline gap-2">
+                            <span id="pieces-val" class="text-3xl font-black text-gray-800 mono">---</span>
+                            <span class="text-[11px] font-bold text-red-600 mono">uds</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded border border-gray-100">
+                        <div class="text-[10px] uppercase text-gray-400 font-bold mb-1">Estado de Ejecución</div>
+                        <div id="status-text" class="text-sm font-bold text-gray-700 italic">Listo para operar</div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-3">Control Directo</h2>
+                <div class="grid grid-cols-1 gap-2">
+                    <button onclick="sendMsg('Ponte a apilar')" class="group p-3.5 bg-white border border-gray-200 rounded-lg flex items-center gap-4 hover:border-red-600 hover:text-red-600 transition-all active:scale-95 text-left abb-shadow">
+                        <i class="fas fa-layer-group text-gray-300 group-hover:text-red-600 text-sm"></i>
+                        <span class="text-xs font-black uppercase tracking-tight">Modo Apilado</span>
+                    </button>
+                    <button onclick="sendMsg('Cambia a modo pick and place')" class="group p-3.5 bg-white border border-gray-200 rounded-lg flex items-center gap-4 hover:border-red-600 hover:text-red-600 transition-all active:scale-95 text-left abb-shadow">
+                        <i class="fas fa-hand-holding text-gray-300 group-hover:text-red-600 text-sm"></i>
+                        <span class="text-xs font-black uppercase tracking-tight">Pick and Place</span>
+                    </button>
+                    <button onclick="sendMsg('Reanudar operación')" class="group p-3.5 bg-white border border-gray-200 rounded-lg flex items-center gap-4 hover:border-green-600 hover:text-green-600 transition-all active:scale-95 text-left abb-shadow">
+                        <i class="fas fa-play text-gray-300 group-hover:text-green-600 text-sm"></i>
+                        <span class="text-xs font-black uppercase tracking-tight">Reanudar</span>
+                    </button>
+                    <button onclick="sendMsg('Detener robot')" class="group p-3.5 bg-white border border-gray-200 rounded-lg flex items-center gap-4 hover:border-red-600 hover:text-red-600 transition-all active:scale-95 text-left abb-shadow">
+                        <i class="fas fa-circle-stop text-gray-300 group-hover:text-red-600 text-sm"></i>
+                        <span class="text-xs font-black uppercase tracking-tight">Paro / Reposo</span>
+                    </button>
+                </div>
+            </section>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-white">
+            <div id="chat-container" class="flex-1 overflow-y-auto p-8 space-y-6 bg-[#fafafa]">
+                <div class="flex gap-4 max-w-4xl">
+                    <div class="w-9 h-9 rounded bg-red-600 flex items-center justify-center shrink-0">
+                        <i class="fas fa-robot text-white text-xs"></i>
+                    </div>
+                    <div class="flex-1 p-5 rounded-lg shadow-sm border border-red-50 bg-white text-gray-700 text-sm">
+                        Bienvenido a un <strong>Centro de Control de ABB</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-white border-t border-gray-100">
+                <div class="max-w-4xl mx-auto flex gap-3">
+                    <input type="text" id="chat-input" placeholder="Introduzca comando..." 
+                           class="flex-1 border-2 border-gray-100 rounded-md py-3 px-5 text-sm focus:outline-none focus:border-red-600 bg-gray-50">
+                    <button onclick="sendMsg()" class="px-8 bg-[#e30613] hover:bg-[#b0050f] text-white rounded-md font-black uppercase text-[10px] tracking-widest shadow-md active:scale-95">
+                        Enviar
+                    </button>
+                </div>
+                <p class="text-[8px] text-center text-gray-400 mt-4 uppercase tracking-widest font-bold">CONTROL INTERFACE</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const speedVal = document.getElementById('speed-val');
+        const piecesVal = document.getElementById('pieces-val');
+        const statusText = document.getElementById('status-text');
+        
+        speedVal.innerText = localStorage.getItem('robot-speed') || '---';
+        piecesVal.innerText = localStorage.getItem('robot-pieces') || '---';
+        statusText.innerText = localStorage.getItem('robot-last-action') || 'Listo para operar';
+
+        function updateStatus(text) {
+            const low = text.toLowerCase();
+            if (low.includes('[info]') || low.includes('fragmentos')) return;
+
+            const sMatch = low.match(/(?:velocidad|speed)\s*(?:a|en|de)?\s*(\d{2,4})/i) || low.match(/(\d{2,4})\s*mm\/s/i);
+            if (sMatch) {
+                speedVal.innerText = sMatch[1];
+                localStorage.setItem('robot-speed', sMatch[1]);
+            }
+            const pMatch = low.match(/(?:m[áa]ximo|tope|cantidad|apila)\s*(?:de)?\s*(\d{1,2})/i) || low.match(/(\d{1,2})\s*(?:cajas|piezas|objetos)/i);
+            if (pMatch) {
+                piecesVal.innerText = pMatch[1];
+                localStorage.setItem('robot-pieces', pMatch[1]);
+            }
+
+            if (low.includes('apilar')) { statusText.innerText = 'Apilar'; localStorage.setItem('robot-last-action', 'Apilar'); }
+            else if (low.includes('pick')) { statusText.innerText = 'Pick and Place'; localStorage.setItem('robot-last-action', 'Pick and Place'); }
+            else if (low.includes('detener') || low.includes('stop') || low.includes('reposo')) { statusText.innerText = 'Reposo'; localStorage.setItem('robot-last-action', 'Reposo'); }
+            else if (low.includes('reanudar') || low.includes('continuar')) { statusText.innerText = 'En Operación'; localStorage.setItem('robot-last-action', 'En Operación'); }
+        }
+
+        async function sendMsg(overrideText) {
+            const text = overrideText || chatInput.value;
+            if (!text.trim()) return;
+
+            addMessage('user', text);
+            if (!overrideText) chatInput.value = '';
+            updateStatus(text);
+
+            const loaderId = 'loading-' + Date.now();
+            addMessage('agent', '<i class="fas fa-spinner fa-spin"></i> Procesando...', loaderId);
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                
+                // Si no hay respuesta del agente, eliminamos el cargando y no mostramos nada
+                if (!data.response) {
+                    const loader = document.getElementById(loaderId).closest('.flex');
+                    if (loader) loader.remove();
+                    return;
+                }
+
+                document.getElementById(loaderId).innerHTML = marked.parse(data.response);
+                updateStatus(data.response);
+            } catch (e) {
+                document.getElementById(loaderId).innerText = "Error de conexión.";
+            }
+        }
+
+        function addMessage(role, content, id = null) {
+            const div = document.createElement('div');
+            div.className = `flex gap-4 max-w-4xl ${role === 'user' ? 'ml-auto flex-row-reverse' : ''}`;
+            div.innerHTML = `
+                <div class="w-9 h-9 rounded shadow-sm flex items-center justify-center shrink-0 ${role === 'user' ? 'bg-gray-800' : 'bg-red-600'}">
+                    <i class="fas ${role === 'user' ? 'fa-user' : 'fa-robot'} text-white text-xs"></i>
+                </div>
+                <div id="${id || ''}" class="flex-1 p-5 rounded-lg shadow-sm border border-gray-200 bg-white text-gray-700 text-sm markdown-body">
+                    ${role === 'user' ? content : content}
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
+    </script>
+</body>
+</html>
